@@ -1,0 +1,35 @@
+version: '3.7'
+
+services:
+
+  database:
+    container_name: pgsql1-database
+    image: postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=task
+    ports:
+      - 5432:5432
+
+  flyway:
+    container_name: pgsql1-flyway
+    image: flyway/flyway
+    command: -url=jdbc:postgresql://pgsql1-database:5432/task -schemas=public -user=postgres -password=postgres -connectRetries=60 migrate
+    volumes:
+      - ./migrations:/flyway/sql
+    depends_on:
+      - database
+
+  pgadmin:
+    container_name: pgadmin_container
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin4@pgadmin.org}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - ./.pgadmin:/root/.pgadmin
+    ports:
+      - ${PGADMIN_PORT:-5050}:80
+    restart: unless-stopped
